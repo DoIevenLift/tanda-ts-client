@@ -2,6 +2,8 @@
 
 A typescript async / await client for the Tanda API. In the context of this application it can only be used on the server and will throw errors if used on the client.
 
+_note: first package. Probably broken_
+
 ## Usage
 
 ```typescript
