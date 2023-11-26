@@ -1,15 +1,25 @@
 {
   "name": "tanda-js",
-  "version": "0.0.1",
+  "version": "0.0.11",
   "description": "A typescript client for interacting with the Tanda v2.0 API",
   "main": "index.js",
   "author": "Jacob",
   "license": "MIT",
   "private": false,
+  "keywords": [
+    "tanda",
+    "api",
+    "client",
+    "typescript"
+  ],
   "devDependencies": {
     "ts-node": "^10.9.1",
     "tsup": "^8.0.1",
     "typescript": "^5.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DoIevenLift/tanda-ts-client"
   },
   "scripts": {
     "build": "tsup src/index.ts --format cjs --dts-resolve --minify --clean --sourcemap",

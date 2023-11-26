@@ -1,13 +1,15 @@
 ## Tanda client
 
-A typescript async / await client for the Tanda API. In the context of this application it can only be used on the server and will throw errors if used on the client.
+A typescript async / await client for the Tanda API. In the context of this application it can only be used on the server and will throw errors if used on the client. Tanda documents can be found here - https://my.tanda.co/api/v2/documentation#top
+
+_note: first package. Probably broken_
 
 ## Usage
 
 ```typescript
-import { PayrollClientInitialiser } from 'utilities/server-actions/external-applications/tanda';
+import TandaClient from 'tanda-js';
 
-const tanda = new PayrollClientInitialiser({ 
+const tanda = new TandaClient({ 
   type: 'classic',
   token: '1234'
 });
@@ -18,11 +20,11 @@ This will return a client that you can use to make requests to the tanda API. If
 
 ```typescript
 
-const tandaOne = new PayrollClientInitialiser({ 
+const tandaOne = new TandaClient({ 
   type: 'classic',
   token: '1234'
 });
-const tandaTwo = new PayrollClientInitialiser({
+const tandaTwo = new TandaClient({
   type: 'classic',
   token: '1234'
 });
