@@ -15,6 +15,10 @@ import type { AwardTagsResponse } from '../types/endpoints/awardTags-types';
 import type { GetDefaultLeaveHoursParams, LeaveRequestsResponse, GetLeaveRequestsParams, CreateLeaveRequestBody, LeaveRequestsForUserResponse, DefaultLeaveHoursResponse } from '../types/endpoints/leaveRequests-types';
 import type { LeaveBalanceResponse, GetLeaveBalancesParams, CreateLeaveBalanceBody, CreateMultipleLeaveBalancesBody, CreateMultipleLeaveBalancesResponse, UpdateLeaveBalanceBody, UpdateLeaveBalanceByUserIdBody, PredictLeaveBalanceBody, PredictLeaveBalanceResponse } from '../types/endpoints/leaveBalances-types';
 import type { GetVersionsResponse } from '../types/generic-types';
+import { CreateRepeatingUnavailability, CreateUnavailability, CreateUnavailabilityAllDay, GetUnavailabilityParams, RepeatingUnavailabilityResponse, UnavailabilityResponse } from '../types/endpoints/unavailability-types';
+import { CreateDatastream, DataStreamsResponse, UpdateDatastream } from '../types/endpoints/data-streams-types';
+import { CreateDataStream, CreateDataStreamJoinedToTeam, DataStreamJoinsResponse, UpdateDataStreamJoin } from '../types/endpoints/data-stream-joints-types';
+import { CreateMultipleStoreStats, CreateMultipleStoreStatsByDataStream, CreateStoreStats, CreateStoreStatsByDataStream, DeleteStoreStats, StoreStatsParams, StoreStatsResponse } from '../types/endpoints/storestats-types';
 
 interface PasswordOptions {
   type: 'classic';
@@ -215,4 +219,47 @@ export default class TandaClient {
       predictLeaveBalance: (leave_balance_id: number, body: PredictLeaveBalanceBody) => post<PredictLeaveBalanceResponse, {}, PredictLeaveBalanceBody>(`${this.url}/leave_balances/${leave_balance_id}/predict`, this.config, body, {}),
     }
   };
+
+  get Unavailability() {
+    return {
+      getUnavailability: (params?: GetUnavailabilityParams) => get<UnavailabilityResponse[], GetUnavailabilityParams>(`${this.url}/unavailability`, this.config, params),
+      createUnavailability: (body: CreateUnavailability | CreateUnavailabilityAllDay | CreateRepeatingUnavailability) => post<UnavailabilityResponse, {}, CreateUnavailability | CreateUnavailabilityAllDay | CreateRepeatingUnavailability>(`${this.url}/unavailability`, this.config, body, {}), //! maybe split this into different methods.
+      getRepeatingUnavailabilityById: (unavailability_id: number) => get<RepeatingUnavailabilityResponse[], {}>(`${this.url}/unavailability/repeating_for/${unavailability_id}`, this.config, {}),
+      getUnavailabilityById: (unavailability_id: number) => get<UnavailabilityResponse | RepeatingUnavailabilityResponse, {}>(`${this.url}/unavailability/${unavailability_id}`, this.config, {}),
+      updateUnavailabilityById: (unavailability_id: number, body: { title: string }) => put<UnavailabilityResponse | RepeatingUnavailabilityResponse, {}, { title: string }>(`${this.url}/unavailability/${unavailability_id}`, this.config, body, {}), //! need more examples / testing of this endpoint to determine what can go into the put.
+      deleteUnavailabilityById: (unavailability_id: number) => del<{ success: boolean, message: string }, {}>(`${this.url}/unavailability/${unavailability_id}`, this.config, {}),
+    }
+  };
+
+  get Datastreams() {
+    return {
+      getDataStreams: (params?: { updated_after: number }) => get<DataStreamsResponse[], { updated_after: number }>(`${this.url}/datastreams`, this.config, params),
+      createDataStream: (body: CreateDatastream) => post<DataStreamsResponse, {}, CreateDatastream>(`${this.url}/datastreams`, this.config, body, {}),
+      getDataStreamById: (datastream_id: number) => get<DataStreamsResponse, {}>(`${this.url}/datastreams/${datastream_id}`, this.config, {}),
+      updateDataStreamById: (datastream_id: number, body: UpdateDatastream) => put<DataStreamsResponse, {}, UpdateDatastream>(`${this.url}/datastreams/${datastream_id}`, this.config, body, {}),
+      deleteDataStreamById: (datastream_id: number) => del<{ success: boolean, message: string }, {}>(`${this.url}/datastreams/${datastream_id}`, this.config, {}),
+      getDataStreamVersionsById: (datastream_id: number, params?: { updated_after: number }) => get<GetVersionsResponse[], { updated_after: number }>(`${this.url}/datastreams/${datastream_id}/versions`, this.config, params),
+    }
+  };
+
+  get DatastreamJoins() {
+    return {
+      getDataStreamJoins: (params?: { updated_after: number }) => get<DataStreamJoinsResponse[], { updated_after: number }>(`${this.url}/datastreamjoins`, this.config, params),
+      createDataSteamJoin: (body: CreateDataStream | CreateDataStreamJoinedToTeam) => post<DataStreamJoinsResponse, {}, CreateDataStream | CreateDataStreamJoinedToTeam>(`${this.url}/datastreamjoins`, this.config, body, {}),
+      getDataStreamJoinById: (datastreamjoin_id: number) => get<DataStreamJoinsResponse, {}>(`${this.url}/datastreamjoins/${datastreamjoin_id}`, this.config, {}),
+      updateDataStreamJoinById: (datastreamjoin_id: number, body: UpdateDataStreamJoin) => put<DataStreamJoinsResponse, {}, UpdateDataStreamJoin>(`${this.url}/datastreamjoins/${datastreamjoin_id}`, this.config, body, {}), //! need to test this endpoint to find out the proper types.
+      deleteDataStreamJoinById: (datastreamjoin_id: number) => del<{ success: boolean, message: string }, {}>(`${this.url}/datastreamjoins/${datastreamjoin_id}`, this.config, {}),
+    }
+  };
+
+  get StoreStats() {
+    return {
+      getStoreStats: (dataStreamId: number, params: StoreStatsParams) => get<StoreStatsResponse[], StoreStatsParams>(`${this.url}/storestats/for_datastream/${dataStreamId}/`, this.config, params),
+      createStoreStats: (dataStreamId: number, body: CreateStoreStats | CreateMultipleStoreStats) => post<StoreStatsResponse | StoreStatsResponse[], {}, CreateStoreStats | CreateMultipleStoreStats>(`${this.url}/storestats/for_datastream/${dataStreamId}/`, this.config, body, {}),
+      deleteStoreStats: (body: DeleteStoreStats) => post<{ success: boolean, message: string }, {}, DeleteStoreStats>(`${this.url}/storestats/for_datastream`, this.config, body, {}),
+      createMultipleStoreStatsByDataStream: (body: CreateStoreStatsByDataStream | CreateMultipleStoreStatsByDataStream) => post<StoreStatsResponse | StoreStatsResponse[], {}, CreateStoreStatsByDataStream | CreateMultipleStoreStatsByDataStream>(`${this.url}/storestats/for_datastream`, this.config, body, {})
+    }
+  };
+
+  
 }
