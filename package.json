@@ -1,6 +1,6 @@
 {
   "name": "tanda-js",
-  "version": "0.0.12",
+  "version": "0.0.2",
   "description": "A typescript client for interacting with the Tanda v2.0 API",
   "main": "index.js",
   "author": "Jacob",
