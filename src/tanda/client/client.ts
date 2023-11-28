@@ -15,6 +15,16 @@ import type { AwardTagsResponse } from '../types/endpoints/awardTags-types';
 import type { GetDefaultLeaveHoursParams, LeaveRequestsResponse, GetLeaveRequestsParams, CreateLeaveRequestBody, LeaveRequestsForUserResponse, DefaultLeaveHoursResponse } from '../types/endpoints/leaveRequests-types';
 import type { LeaveBalanceResponse, GetLeaveBalancesParams, CreateLeaveBalanceBody, CreateMultipleLeaveBalancesBody, CreateMultipleLeaveBalancesResponse, UpdateLeaveBalanceBody, UpdateLeaveBalanceByUserIdBody, PredictLeaveBalanceBody, PredictLeaveBalanceResponse } from '../types/endpoints/leaveBalances-types';
 import type { GetVersionsResponse } from '../types/generic-types';
+import type { CreateRepeatingUnavailability, CreateUnavailability, CreateUnavailabilityAllDay, GetUnavailabilityParams, RepeatingUnavailabilityResponse, UnavailabilityResponse } from '../types/endpoints/unavailability-types';
+import type { CreateDatastream, DataStreamsResponse, UpdateDatastream } from '../types/endpoints/data-streams-types';
+import type { CreateDataStream, CreateDataStreamJoinedToTeam, DataStreamJoinsResponse, UpdateDataStreamJoin } from '../types/endpoints/data-stream-joints-types';
+import type { CreateMultipleStoreStats, CreateMultipleStoreStatsByDataStream, CreateStoreStats, CreateStoreStatsByDataStream, DeleteStoreStats, StoreStatsParams, StoreStatsResponse } from '../types/endpoints/storestats-types';
+import type { CreateDevice, DeviceResponse } from '../types/endpoints/devices-types';
+import { PerformClockInForUser, ClockInResponse, ClockIn } from '../types/endpoints/clockins-types';
+import { CreateQualification, QualificationsResponse, UpdateQualification } from '../types/endpoints/qualifications-types';
+import { SystemSettingsResponse } from '../types/endpoints/systemsettings-types';
+import { AwardTemplatesResponse, EnableAwardTemplate, EnableAwardTemplateWithLeaveTypes } from '../types/endpoints/awardTemplates-types';
+import { AccessToken, AccessTokenResponse, CreateOrganisation, OrganisationsResponse, UpdateOrganisation } from '../types/endpoints/organisation-types';
 
 interface PasswordOptions {
   type: 'classic';
@@ -215,4 +225,101 @@ export default class TandaClient {
       predictLeaveBalance: (leave_balance_id: number, body: PredictLeaveBalanceBody) => post<PredictLeaveBalanceResponse, {}, PredictLeaveBalanceBody>(`${this.url}/leave_balances/${leave_balance_id}/predict`, this.config, body, {}),
     }
   };
+
+  get Unavailability() {
+    return {
+      getUnavailability: (params?: GetUnavailabilityParams) => get<UnavailabilityResponse[], GetUnavailabilityParams>(`${this.url}/unavailability`, this.config, params),
+      createUnavailability: (body: CreateUnavailability | CreateUnavailabilityAllDay | CreateRepeatingUnavailability) => post<UnavailabilityResponse, {}, CreateUnavailability | CreateUnavailabilityAllDay | CreateRepeatingUnavailability>(`${this.url}/unavailability`, this.config, body, {}), //! maybe split this into different methods.
+      getRepeatingUnavailabilityById: (unavailability_id: number) => get<RepeatingUnavailabilityResponse[], {}>(`${this.url}/unavailability/repeating_for/${unavailability_id}`, this.config, {}),
+      getUnavailabilityById: (unavailability_id: number) => get<UnavailabilityResponse | RepeatingUnavailabilityResponse, {}>(`${this.url}/unavailability/${unavailability_id}`, this.config, {}),
+      updateUnavailabilityById: (unavailability_id: number, body: { title: string }) => put<UnavailabilityResponse | RepeatingUnavailabilityResponse, {}, { title: string }>(`${this.url}/unavailability/${unavailability_id}`, this.config, body, {}), //! need more examples / testing of this endpoint to determine what can go into the put.
+      deleteUnavailabilityById: (unavailability_id: number) => del<{ success: boolean, message: string }, {}>(`${this.url}/unavailability/${unavailability_id}`, this.config, {}),
+    }
+  };
+
+  get Datastreams() {
+    return {
+      getDataStreams: (params?: { updated_after: number }) => get<DataStreamsResponse[], { updated_after: number }>(`${this.url}/datastreams`, this.config, params),
+      createDataStream: (body: CreateDatastream) => post<DataStreamsResponse, {}, CreateDatastream>(`${this.url}/datastreams`, this.config, body, {}),
+      getDataStreamById: (datastream_id: number) => get<DataStreamsResponse, {}>(`${this.url}/datastreams/${datastream_id}`, this.config, {}),
+      updateDataStreamById: (datastream_id: number, body: UpdateDatastream) => put<DataStreamsResponse, {}, UpdateDatastream>(`${this.url}/datastreams/${datastream_id}`, this.config, body, {}),
+      deleteDataStreamById: (datastream_id: number) => del<{ success: boolean, message: string }, {}>(`${this.url}/datastreams/${datastream_id}`, this.config, {}),
+      getDataStreamVersionsById: (datastream_id: number, params?: { updated_after: number }) => get<GetVersionsResponse[], { updated_after: number }>(`${this.url}/datastreams/${datastream_id}/versions`, this.config, params),
+    }
+  };
+
+  get DatastreamJoins() {
+    return {
+      getDataStreamJoins: (params?: { updated_after: number }) => get<DataStreamJoinsResponse[], { updated_after: number }>(`${this.url}/datastreamjoins`, this.config, params),
+      createDataSteamJoin: (body: CreateDataStream | CreateDataStreamJoinedToTeam) => post<DataStreamJoinsResponse, {}, CreateDataStream | CreateDataStreamJoinedToTeam>(`${this.url}/datastreamjoins`, this.config, body, {}),
+      getDataStreamJoinById: (datastreamjoin_id: number) => get<DataStreamJoinsResponse, {}>(`${this.url}/datastreamjoins/${datastreamjoin_id}`, this.config, {}),
+      updateDataStreamJoinById: (datastreamjoin_id: number, body: UpdateDataStreamJoin) => put<DataStreamJoinsResponse, {}, UpdateDataStreamJoin>(`${this.url}/datastreamjoins/${datastreamjoin_id}`, this.config, body, {}), //! need to test this endpoint to find out the proper types.
+      deleteDataStreamJoinById: (datastreamjoin_id: number) => del<{ success: boolean, message: string }, {}>(`${this.url}/datastreamjoins/${datastreamjoin_id}`, this.config, {}),
+    }
+  };
+
+  get StoreStats() {
+    return {
+      getStoreStats: (dataStreamId: number, params: StoreStatsParams) => get<StoreStatsResponse[], StoreStatsParams>(`${this.url}/storestats/for_datastream/${dataStreamId}/`, this.config, params),
+      createStoreStats: (dataStreamId: number, body: CreateStoreStats | CreateMultipleStoreStats) => post<StoreStatsResponse | StoreStatsResponse[], {}, CreateStoreStats | CreateMultipleStoreStats>(`${this.url}/storestats/for_datastream/${dataStreamId}/`, this.config, body, {}),
+      deleteStoreStats: (body: DeleteStoreStats) => post<{ success: boolean, message: string }, {}, DeleteStoreStats>(`${this.url}/storestats/for_datastream`, this.config, body, {}),
+      createMultipleStoreStatsByDataStream: (body: CreateStoreStatsByDataStream | CreateMultipleStoreStatsByDataStream) => post<StoreStatsResponse | StoreStatsResponse[], {}, CreateStoreStatsByDataStream | CreateMultipleStoreStatsByDataStream>(`${this.url}/storestats/for_datastream`, this.config, body, {})
+    }
+  };
+
+  get Devices() {
+    return {
+      getDevices: (params?: { updated_after: number }) => get<DeviceResponse[], { updated_after: number }>(`${this.url}/devices`, this.config, params),
+      createDevice: (body: CreateDevice) => post<DeviceResponse, {}, CreateDevice>(`${this.url}/devices`, this.config, body, {}),
+      getReturnedDeviceList: (params?: { updated_after: number}) => get<DeviceResponse[], { updated_after: number}>(`${this.url}/devices/returned`, this.config, params),
+      getDeviceById: (device_id: number) => get<DeviceResponse, {}>(`${this.url}/devices/${device_id}`, this.config, {}),
+      updateDeviceById: (device_id: number, body: CreateDevice) => put<DeviceResponse, {}, CreateDevice>(`${this.url}/devices/${device_id}`, this.config, body, {}), //! type here is not neccessarily correct. 
+      returnDeviceById: (device_id: number) => put<DeviceResponse, {}, {}>(`${this.url}/devices/${device_id}/return`, this.config, {}, {}), //! type here is not neccessarily correct. Needs to be tested.
+      getDeviceVersionsById: (device_id: number, params?: { updated_after: number }) => get<GetVersionsResponse[], { updated_after: number }>(`${this.url}/devices/${device_id}/versions`, this.config, params),
+      resetDeviceAccessCode: (body: { access_code: string }) => post<{ success: boolean, message: string }, {}, { access_code: string }>(`${this.url}/devices/reset_access_code`, this.config, body, {}), //! need to test this. No response profile in the docs.
+    }
+  };
+
+  get ClockIns() {
+    return {
+      performClockInForUser: (body: PerformClockInForUser) => post<ClockInResponse, {}, PerformClockInForUser>(`${this.url}/clockins`, this.config, body, {}),
+      getClockIns: (params: ClockIn) => get<ClockInResponse[], ClockIn>(`${this.url}/clockins`, this.config, params), //! method for User, Device or both. not typed correctly.
+      getClockInById: (clockin_id: number) => get<ClockInResponse, {}>(`${this.url}/clockins/${clockin_id}`, this.config, {}),
+    }
+  };
+
+  get Qualifications() {
+    return {
+      getQualifications: () => get<QualificationsResponse[], {}>(`${this.url}/qualifications`, this.config, {}),
+      createQualification: (body: CreateQualification) => post<QualificationsResponse, {}, CreateQualification>(`${this.url}/qualifications`, this.config, body, {}),
+      getQualificationById: (qualification_id: number) => get<QualificationsResponse, {}>(`${this.url}/qualifications/${qualification_id}`, this.config, {}),
+      updateQualificationById: (qualification_id: number, body: UpdateQualification) => put<QualificationsResponse, {}, UpdateQualification>(`${this.url}/qualifications/${qualification_id}`, this.config, body, {}),
+      deleteQualificationById: (qualification_id: number) => del<{ success: boolean, message: string }, {}>(`${this.url}/qualifications/${qualification_id}`, this.config, {}),
+    }
+  };
+
+  get SystemSettings() {
+    return {
+      getSystemSettings: () => get<SystemSettingsResponse, {}>(`${this.url}/settings`, this.config, {}),
+      getSystemSettingsVersions: (params?: { updated_after: number }) => get<GetVersionsResponse[], { updated_after: number }>(`${this.url}/settings/versions`, this.config, params),
+    }
+  };
+
+  get AwardTemplates() {
+    return {
+      getEnabledAwardTemplates: (params?: { updated_after?: number, include_custom_awards?: boolean }) => get<AwardTemplatesResponse[], { updated_after?: number, include_custom_awards?: boolean }>(`${this.url}/award_templates`, this.config, params),
+      enableAwardTemplates: (body: EnableAwardTemplate | EnableAwardTemplateWithLeaveTypes) => post<AwardTemplatesResponse, {}, EnableAwardTemplate | EnableAwardTemplateWithLeaveTypes>(`${this.url}/award_templates`, this.config, body, {}),
+      getAwardTemplatesInTanda: () => get<AwardTemplatesResponse[], {}>(`${this.url}/award_templates/available`, this.config, {}),
+    }
+  };
+
+  get Organisations() {
+    return {
+      getOrganisations: (params?: { updated_after: number }) => get<OrganisationsResponse[], { updated_after: number }>(`${this.url}/organisations`, this.config, params),
+      createOrganisation: (body: CreateOrganisation) => post<OrganisationsResponse, {}, CreateOrganisation>(`${this.url}/organisations`, this.config, body, {}), //! response type could be wrong due to nulls etc.
+      getOrganisationById: (organisation_id: number) => get<OrganisationsResponse, {}>(`${this.url}/organisations/${organisation_id}`, this.config, {}), //! best guess. Tanda docs don't show.
+      updateOrganisationById: (organisation_id: number, body: UpdateOrganisation) => put<OrganisationsResponse, {}, UpdateOrganisation>(`${this.url}/organisations/${organisation_id}`, this.config, body, {}), 
+      createAccessToken: (body: AccessToken) => post<AccessTokenResponse, {}, AccessToken>(`${this.url}/organisations/access_tokens`, this.config, body, {}),
+    }
+  }
 }
