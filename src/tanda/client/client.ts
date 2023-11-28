@@ -15,10 +15,16 @@ import type { AwardTagsResponse } from '../types/endpoints/awardTags-types';
 import type { GetDefaultLeaveHoursParams, LeaveRequestsResponse, GetLeaveRequestsParams, CreateLeaveRequestBody, LeaveRequestsForUserResponse, DefaultLeaveHoursResponse } from '../types/endpoints/leaveRequests-types';
 import type { LeaveBalanceResponse, GetLeaveBalancesParams, CreateLeaveBalanceBody, CreateMultipleLeaveBalancesBody, CreateMultipleLeaveBalancesResponse, UpdateLeaveBalanceBody, UpdateLeaveBalanceByUserIdBody, PredictLeaveBalanceBody, PredictLeaveBalanceResponse } from '../types/endpoints/leaveBalances-types';
 import type { GetVersionsResponse } from '../types/generic-types';
-import { CreateRepeatingUnavailability, CreateUnavailability, CreateUnavailabilityAllDay, GetUnavailabilityParams, RepeatingUnavailabilityResponse, UnavailabilityResponse } from '../types/endpoints/unavailability-types';
-import { CreateDatastream, DataStreamsResponse, UpdateDatastream } from '../types/endpoints/data-streams-types';
-import { CreateDataStream, CreateDataStreamJoinedToTeam, DataStreamJoinsResponse, UpdateDataStreamJoin } from '../types/endpoints/data-stream-joints-types';
-import { CreateMultipleStoreStats, CreateMultipleStoreStatsByDataStream, CreateStoreStats, CreateStoreStatsByDataStream, DeleteStoreStats, StoreStatsParams, StoreStatsResponse } from '../types/endpoints/storestats-types';
+import type { CreateRepeatingUnavailability, CreateUnavailability, CreateUnavailabilityAllDay, GetUnavailabilityParams, RepeatingUnavailabilityResponse, UnavailabilityResponse } from '../types/endpoints/unavailability-types';
+import type { CreateDatastream, DataStreamsResponse, UpdateDatastream } from '../types/endpoints/data-streams-types';
+import type { CreateDataStream, CreateDataStreamJoinedToTeam, DataStreamJoinsResponse, UpdateDataStreamJoin } from '../types/endpoints/data-stream-joints-types';
+import type { CreateMultipleStoreStats, CreateMultipleStoreStatsByDataStream, CreateStoreStats, CreateStoreStatsByDataStream, DeleteStoreStats, StoreStatsParams, StoreStatsResponse } from '../types/endpoints/storestats-types';
+import type { CreateDevice, DeviceResponse } from '../types/endpoints/devices-types';
+import { PerformClockInForUser, ClockInResponse, ClockIn } from '../types/endpoints/clockins-types';
+import { CreateQualification, QualificationsResponse, UpdateQualification } from '../types/endpoints/qualifications-types';
+import { SystemSettingsResponse } from '../types/endpoints/systemsettings-types';
+import { AwardTemplatesResponse, EnableAwardTemplate, EnableAwardTemplateWithLeaveTypes } from '../types/endpoints/awardTemplates-types';
+import { AccessToken, AccessTokenResponse, CreateOrganisation, OrganisationsResponse, UpdateOrganisation } from '../types/endpoints/organisation-types';
 
 interface PasswordOptions {
   type: 'classic';
@@ -261,5 +267,59 @@ export default class TandaClient {
     }
   };
 
-  
+  get Devices() {
+    return {
+      getDevices: (params?: { updated_after: number }) => get<DeviceResponse[], { updated_after: number }>(`${this.url}/devices`, this.config, params),
+      createDevice: (body: CreateDevice) => post<DeviceResponse, {}, CreateDevice>(`${this.url}/devices`, this.config, body, {}),
+      getReturnedDeviceList: (params?: { updated_after: number}) => get<DeviceResponse[], { updated_after: number}>(`${this.url}/devices/returned`, this.config, params),
+      getDeviceById: (device_id: number) => get<DeviceResponse, {}>(`${this.url}/devices/${device_id}`, this.config, {}),
+      updateDeviceById: (device_id: number, body: CreateDevice) => put<DeviceResponse, {}, CreateDevice>(`${this.url}/devices/${device_id}`, this.config, body, {}), //! type here is not neccessarily correct. 
+      returnDeviceById: (device_id: number) => put<DeviceResponse, {}, {}>(`${this.url}/devices/${device_id}/return`, this.config, {}, {}), //! type here is not neccessarily correct. Needs to be tested.
+      getDeviceVersionsById: (device_id: number, params?: { updated_after: number }) => get<GetVersionsResponse[], { updated_after: number }>(`${this.url}/devices/${device_id}/versions`, this.config, params),
+      resetDeviceAccessCode: (body: { access_code: string }) => post<{ success: boolean, message: string }, {}, { access_code: string }>(`${this.url}/devices/reset_access_code`, this.config, body, {}), //! need to test this. No response profile in the docs.
+    }
+  };
+
+  get ClockIns() {
+    return {
+      performClockInForUser: (body: PerformClockInForUser) => post<ClockInResponse, {}, PerformClockInForUser>(`${this.url}/clockins`, this.config, body, {}),
+      getClockIns: (params: ClockIn) => get<ClockInResponse[], ClockIn>(`${this.url}/clockins`, this.config, params), //! method for User, Device or both. not typed correctly.
+      getClockInById: (clockin_id: number) => get<ClockInResponse, {}>(`${this.url}/clockins/${clockin_id}`, this.config, {}),
+    }
+  };
+
+  get Qualifications() {
+    return {
+      getQualifications: () => get<QualificationsResponse[], {}>(`${this.url}/qualifications`, this.config, {}),
+      createQualification: (body: CreateQualification) => post<QualificationsResponse, {}, CreateQualification>(`${this.url}/qualifications`, this.config, body, {}),
+      getQualificationById: (qualification_id: number) => get<QualificationsResponse, {}>(`${this.url}/qualifications/${qualification_id}`, this.config, {}),
+      updateQualificationById: (qualification_id: number, body: UpdateQualification) => put<QualificationsResponse, {}, UpdateQualification>(`${this.url}/qualifications/${qualification_id}`, this.config, body, {}),
+      deleteQualificationById: (qualification_id: number) => del<{ success: boolean, message: string }, {}>(`${this.url}/qualifications/${qualification_id}`, this.config, {}),
+    }
+  };
+
+  get SystemSettings() {
+    return {
+      getSystemSettings: () => get<SystemSettingsResponse, {}>(`${this.url}/settings`, this.config, {}),
+      getSystemSettingsVersions: (params?: { updated_after: number }) => get<GetVersionsResponse[], { updated_after: number }>(`${this.url}/settings/versions`, this.config, params),
+    }
+  };
+
+  get AwardTemplates() {
+    return {
+      getEnabledAwardTemplates: (params?: { updated_after?: number, include_custom_awards?: boolean }) => get<AwardTemplatesResponse[], { updated_after?: number, include_custom_awards?: boolean }>(`${this.url}/award_templates`, this.config, params),
+      enableAwardTemplates: (body: EnableAwardTemplate | EnableAwardTemplateWithLeaveTypes) => post<AwardTemplatesResponse, {}, EnableAwardTemplate | EnableAwardTemplateWithLeaveTypes>(`${this.url}/award_templates`, this.config, body, {}),
+      getAwardTemplatesInTanda: () => get<AwardTemplatesResponse[], {}>(`${this.url}/award_templates/available`, this.config, {}),
+    }
+  };
+
+  get Organisations() {
+    return {
+      getOrganisations: (params?: { updated_after: number }) => get<OrganisationsResponse[], { updated_after: number }>(`${this.url}/organisations`, this.config, params),
+      createOrganisation: (body: CreateOrganisation) => post<OrganisationsResponse, {}, CreateOrganisation>(`${this.url}/organisations`, this.config, body, {}), //! response type could be wrong due to nulls etc.
+      getOrganisationById: (organisation_id: number) => get<OrganisationsResponse, {}>(`${this.url}/organisations/${organisation_id}`, this.config, {}), //! best guess. Tanda docs don't show.
+      updateOrganisationById: (organisation_id: number, body: UpdateOrganisation) => put<OrganisationsResponse, {}, UpdateOrganisation>(`${this.url}/organisations/${organisation_id}`, this.config, body, {}), 
+      createAccessToken: (body: AccessToken) => post<AccessTokenResponse, {}, AccessToken>(`${this.url}/organisations/access_tokens`, this.config, body, {}),
+    }
+  }
 }
